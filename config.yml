@@ -3,3 +3,8 @@ TELEGRAM_API_TOKEN: 238841809:AAE8kB5gwwUc-wqSMYzTnB-KMQ24T2jpR38
 langs:
   ru:
     find_interlocutor: Найти собеседника
+    selected_language: Выбран русский язык
+
+  en:
+    find_interlocutor: Find interlocutor
+    selected_language: English is selected

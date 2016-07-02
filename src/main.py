@@ -1,5 +1,5 @@
-from telegram.ext import Updater
-from telegram.ext import CommandHandler, CallbackQueryHandler
+from telegram.ext import Updater, Filters
+from telegram.ext import CommandHandler, CallbackQueryHandler, MessageHandler
 import yaml
 from handlers import Handlers
 import logging
@@ -16,6 +16,7 @@ if __name__ == '__main__':
     handlers = Handlers(config)
     updater = Updater(config['TELEGRAM_API_TOKEN'])
     updater.dispatcher.add_handler(CommandHandler('start', handlers.start))
+    updater.dispatcher.add_handler(MessageHandler([Filters.text], handlers.message))
     updater.dispatcher.add_handler(CallbackQueryHandler(handlers.callback))
 
     updater.start_polling()
