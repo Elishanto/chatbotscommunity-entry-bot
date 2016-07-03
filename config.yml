@@ -7,9 +7,11 @@ langs:
     selected_language: Выбран русский язык
     search_began: Поиск начался...
     found: Собеседник найден
+    connection_lost: Соединение потеряно
   en:
     find_interlocutor: Find interlocutor
     change_interlocutor: Change interlocutor
     selected_language: English is selected
     search_began: Search began...
     found: Interlocutor found
+    connection_lost: Connection lost

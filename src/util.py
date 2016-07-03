@@ -78,8 +78,14 @@ def start_search(self, bot, update):
         interlocutor_lang = self.mongo.get_user_var(interlocutor_id, 'lang', 'ru')
         self.mongo.unset_user_var(interlocutor_id, 'interlocutor')
         self.mongo.unset_user_var(user_id, 'interlocutor')
-        self.available.push_to_available(interlocutor_id)
-        bot.sendMessage(interlocutor_id, text=self.config['langs'][interlocutor_lang]['search_began'])
+        self.available.remove(interlocutor_id)
+        bot.sendMessage(
+            interlocutor_id,
+            text=self.config['langs'][interlocutor_lang]['connection_lost'],
+            reply_markup=ReplyKeyboardMarkup(
+                [[KeyboardButton(self.config['langs'][interlocutor_lang]['find_interlocutor'])]]
+            )
+        )
 
     self.available.push_to_available(user_id)
 
