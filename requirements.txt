@@ -1,2 +1,4 @@
-pymongo
-python-telegram-bot
+pymongo == 3.2.2
+python_telegram_bot == 4.2.0
+redis == 2.10.5
+PyYAML == 3.11
