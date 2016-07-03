@@ -42,11 +42,13 @@ class Handlers:
 
     @handler
     def message(self, bot, update):
-        chat_id = update.message.chat_id
-        text = update.message.text
+        message = update.message
+        chat_id = message.chat_id
+        text = message.text
 
         return {
             'chat_id': chat_id,
             'text': text,
-            'type': 'text'
+            'type': 'text',
+            'message': message
         }

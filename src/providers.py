@@ -10,9 +10,16 @@ class Mongo:
     def set_user_var(self, user_id, name, var):
         self.db.users.update_one({'user_id': user_id}, {'$set': {name: var}}, upsert=True)
 
-    def get_user_var(self, user_id, name, default):
+    def unset_user_var(self, user_id, name):
+        self.db.users.update_one({'user_id': user_id}, {'$unset': name}, upsert=True)
+
+    def get_user_var(self, user_id, name, default=None):
         user = self.db.users.find_one({'user_id': user_id})
         return user[name] if user and name in user else default
+
+    def get_user_where(self, name, var):
+        user = self.db.users.find_one({name: var})
+        return user if user else None
 
 
 class Redis:
@@ -32,12 +39,9 @@ class Redis:
         self.available = True if self.db.scard('available') > 1 else False
         return res
 
-    def is_available(self, user_id):
-        if not self.db.exists('available'):
-            return False
-        keys = self.db.smembers('available')
-        keys = [x for x in keys if int(x) != user_id]
-        return len(keys) > 0
+    def remove(self, user_id):
+        self.db.srem('available', user_id)
+        self.available = True if self.db.scard('available') > 1 else False
 
 
 class List:
@@ -57,3 +61,7 @@ class List:
         res = self.db.pop()
         self.available = True if len(self.db) > 1 else False
         return res
+
+    def remove(self, user_id):
+        self.db.remove(user_id)
+        self.available = True if len(self.db) > 1 else False

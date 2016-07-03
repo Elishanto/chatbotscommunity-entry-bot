@@ -36,7 +36,8 @@ def handler(func):
                 message['text'] = phrases['search_began']
                 threading.Thread(target=start_search, args=(self, bot, update)).start()
             else:
-                pass
+                send_to_interlocutor(self, bot, update, message)
+                return
         else:
             if 'text' in message and message['text'] in phrases:
                 text = message.pop('text')
@@ -52,13 +53,35 @@ def handler(func):
     return wrapper
 
 
+def send_to_interlocutor(self, bot, update, message):
+    user_id = update.message.from_user.id
+    interlocutor = self.mongo.get_user_var(user_id, 'interlocutor')
+    if not interlocutor:
+        return
+
+    bot.sendMessage(interlocutor, message['text'])
+
+
 def start_search(self, bot, update):
     user_id = update.message.from_user.id
     lang = self.mongo.get_user_var(user_id, 'lang', 'ru')
 
+    interlocutor = self.mongo.get_user_where('interlocutor', user_id)
+    if interlocutor:
+        self.mongo.unset_user_var(interlocutor, 'interlocutor')
+        self.mongo.unset_user_var(user_id, 'interlocutor')
+
     self.available.push_to_available(user_id)
 
-    self.available.pop_first_available()
+    interlocutor = int(self.available.pop_first_available())
+    self.available.remove(user_id)
+
+    self.mongo.set_user_var(interlocutor, 'interlocutor', user_id)
+    self.mongo.set_user_var(user_id, 'interlocutor', interlocutor)
+
     bot.sendMessage(update.message.chat_id, text=self.config['langs'][lang]['found'],
+                    reply_markup=ReplyKeyboardMarkup(
+                        [[KeyboardButton(self.config['langs'][lang]['change_interlocutor'])]]))
+    bot.sendMessage(interlocutor, text=self.config['langs'][lang]['found'],
                     reply_markup=ReplyKeyboardMarkup(
                         [[KeyboardButton(self.config['langs'][lang]['change_interlocutor'])]]))
