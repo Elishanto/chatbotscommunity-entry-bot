@@ -1,10 +1,15 @@
 TELEGRAM_API_TOKEN: 238841809:AAE8kB5gwwUc-wqSMYzTnB-KMQ24T2jpR38
-
+db: list
 langs:
   ru:
     find_interlocutor: Найти собеседника
+    change_interlocutor: Сменить собеседника
     selected_language: Выбран русский язык
-
+    search_began: Поиск начался...
+    found: Собеседник найден
   en:
     find_interlocutor: Find interlocutor
+    change_interlocutor: Change interlocutor
     selected_language: English is selected
+    search_began: Search began...
+    found: Собеседник найден

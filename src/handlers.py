@@ -1,12 +1,16 @@
 from util import handler
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-from mongo import Mongo
+from providers import Mongo, Redis, List
 
 
 class Handlers:
     def __init__(self, config):
         self.config = config
         self.mongo = Mongo()
+        if self.config['db'] == 'redis':
+            self.available = Redis()
+        else:
+            self.available = List()
 
     @handler
     def start(self, bot, update):
@@ -28,7 +32,7 @@ class Handlers:
         bot.answerCallbackQuery(query.id)
 
         if data in self.config['langs'].keys():
-            self.mongo.insert_user_lang(query.message.from_user.id, data)
+            self.mongo.set_user_var(query.from_user.id, 'lang', data)
             return {
                 'chat_id': chat_id,
                 'text': 'selected_language',
@@ -38,4 +42,11 @@ class Handlers:
 
     @handler
     def message(self, bot, update):
+        chat_id = update.message.chat_id
         text = update.message.text
+
+        return {
+            'chat_id': chat_id,
+            'text': text,
+            'type': 'text'
+        }
