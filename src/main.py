@@ -16,7 +16,10 @@ if __name__ == '__main__':
     handlers = Handlers(config)
     updater = Updater(config['TELEGRAM_API_TOKEN'])
     updater.dispatcher.add_handler(CommandHandler('start', handlers.start))
-    updater.dispatcher.add_handler(MessageHandler([Filters.text], handlers.message))
+    updater.dispatcher.add_handler(MessageHandler([
+        Filters.audio, Filters.contact, Filters.document, Filters.location, Filters.photo,
+        Filters.sticker, Filters.text, Filters.venue, Filters.video, Filters.voice
+    ], handlers.message))
     updater.dispatcher.add_handler(CallbackQueryHandler(handlers.callback))
 
     updater.start_polling()

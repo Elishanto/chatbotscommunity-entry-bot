@@ -64,7 +64,29 @@ def send_to_interlocutor(self, bot, update, message):
     if not interlocutor:
         return
 
-    bot.sendMessage(interlocutor, message['text'])
+    msg = message['message'].to_dict()
+    if 'audio' in msg and msg['audio']:
+        bot.sendAudio(interlocutor, msg['audio']['file_id'])
+    elif 'contact' in msg and msg['contact']:
+        bot.sendContact(interlocutor, **msg['contact'])
+    elif 'document' in msg and msg['document']:
+        bot.sendDocument(interlocutor, msg['document']['file_id'])
+    elif 'location' in msg and msg['location']:
+        bot.sendLocation(interlocutor, msg['location']['latitude'], msg['location']['longitude'])
+    elif 'photo' in msg and msg['photo']:
+        for photo in msg['photo']:
+            bot.sendPhoto(interlocutor, photo['file_id'])
+    elif 'sticker' in msg and msg['sticker']:
+        bot.sendSticker(interlocutor, msg['sticker']['file_id'])
+    elif 'text' in message and message['text']:
+        bot.sendMessage(interlocutor, message['text'])
+    elif 'venue' in msg and msg['venue']:
+        venue = msg['venue']
+        bot.sendVenue(interlocutor, venue['latitude'], venue['longitude'], venue['title'], venue['address'])
+    elif 'video' in msg and msg['video']:
+        bot.sendVideo(interlocutor, msg['video']['file_id'])
+    elif 'voice' in msg and msg['voice']:
+        bot.sendVoice(interlocutor, msg['voice']['file_id'])
 
 
 def start_search(self, bot, update):
