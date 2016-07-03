@@ -30,7 +30,7 @@ class Redis:
 
     def push_to_available(self, user_id):
         self.db.sadd('available', user_id)
-        self.available = True if self.db.scard('available')-1 > 0 else False
+        self.check_available()
 
     def pop_first_available(self, self_user_id):
         while not self.available:
@@ -41,12 +41,15 @@ class Redis:
         if self_user_id in res:
             res.remove(self_user_id)
         res = res.pop()
-        self.available = True if self.db.scard('available')-1 > 0 else False
+        self.check_available()
         return res
 
     def remove(self, user_id):
         self.db.srem('available', user_id)
-        self.available = True if self.db.scard('available')-1 > 0 else False
+        self.check_available()
+
+    def check_available(self):
+        self.available = True if self.db.scard('available') - 1 > 0 else False
 
 
 class List:
@@ -57,7 +60,7 @@ class List:
     def push_to_available(self, user_id):
         self.db.append(user_id) if user_id not in self.db else None
         self.db = list(set(self.db))
-        self.available = True if len(self.db)-1 > 0 else False
+        self.check_available()
 
     def pop_first_available(self, self_user_id):
         while not self.available:
@@ -68,9 +71,13 @@ class List:
         if self_user_id in res:
             res.remove(self_user_id)
         res = res.pop()
-        self.available = True if len(self.db)-1 > 0 else False
+        self.check_available()
         return res
 
     def remove(self, user_id):
-        self.db.remove(user_id)
-        self.available = True if len(self.db)-1 > 0 else False
+        if user_id in self.db:
+            self.db.remove(user_id)
+        self.check_available()
+
+    def check_available(self):
+        self.available = True if len(self.db) - 1 > 0 else False

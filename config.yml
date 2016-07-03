@@ -1,5 +1,5 @@
 TELEGRAM_API_TOKEN: 238841809:AAE8kB5gwwUc-wqSMYzTnB-KMQ24T2jpR38
-db: redis
+db: list
 langs:
   ru:
     find_interlocutor: Найти собеседника

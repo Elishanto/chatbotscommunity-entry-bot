@@ -95,9 +95,11 @@ def start_search(self, bot, update):
     self.mongo.set_user_var(interlocutor_id, 'interlocutor', user_id)
     self.mongo.set_user_var(user_id, 'interlocutor', interlocutor_id)
 
-    bot.sendMessage(update.message.chat_id, text=self.config['langs'][lang]['found'],
+    bot.sendMessage(update.message.chat_id,
+                    text=self.config['langs'][lang]['found'],
                     reply_markup=ReplyKeyboardMarkup(
                         [[KeyboardButton(self.config['langs'][lang]['change_interlocutor'])]]))
-    bot.sendMessage(interlocutor_id, text=self.config['langs'][interlocutor_lang]['found'],
+    bot.sendMessage(interlocutor_id,
+                    text=self.config['langs'][interlocutor_lang]['found'],
                     reply_markup=ReplyKeyboardMarkup(
                         [[KeyboardButton(self.config['langs'][interlocutor_lang]['change_interlocutor'])]]))
