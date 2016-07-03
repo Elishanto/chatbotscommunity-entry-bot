@@ -58,7 +58,7 @@ def start_search(self, bot, update):
 
     self.available.push_to_available(user_id)
 
-    self.available.pop_first_available(ban=user_id)
+    self.available.pop_first_available()
     bot.sendMessage(update.message.chat_id, text=self.config['langs'][lang]['found'],
                     reply_markup=ReplyKeyboardMarkup(
                         [[KeyboardButton(self.config['langs'][lang]['change_interlocutor'])]]))

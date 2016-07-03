@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from redis import StrictRedis
+import threading
 
 
 class Mongo:
@@ -17,14 +18,19 @@ class Mongo:
 class Redis:
     def __init__(self, host='localhost', port=6379, db=0):
         self.db = StrictRedis(host=host, port=port, db=db)
+        self.available = False
 
     def push_to_available(self, user_id):
         self.db.sadd('available', user_id)
+        self.available = True if self.db.scard('available') > 1 else False
 
-    def pop_first_available(self, ban):
-        while not self.is_available(ban):
-            continue
-        return self.db.spop('available')
+    def pop_first_available(self):
+        while not self.available:
+            threading.Event().wait()
+
+        res = self.db.spop('available')
+        self.available = True if self.db.scard('available') > 1 else False
+        return res
 
     def is_available(self, user_id):
         if not self.db.exists('available'):
@@ -37,15 +43,17 @@ class Redis:
 class List:
     def __init__(self):
         self.db = list()
+        self.available = False
 
     def push_to_available(self, user_id):
         self.db.append(user_id) if user_id not in self.db else None
+        self.db = list(set(self.db))
+        self.available = True if len(self.db) > 1 else False
 
-    def pop_first_available(self, ban):
-        while not self.is_available(ban):
-            continue
-        return self.db.pop()
+    def pop_first_available(self):
+        while not self.available:
+            threading.Event().wait()
 
-    def is_available(self, user_id):
-        keys = [x for x in self.db if int(x) != user_id]
-        return len(keys) > 0
+        res = self.db.pop()
+        self.available = True if len(self.db) > 1 else False
+        return res
