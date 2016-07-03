@@ -21,6 +21,8 @@ TELEGRAM_API_TOKEN: TELEGRAM_API_TOKEN
 db: redis OR list
 ```
 
+If you've chosen `redis` as db you need to install&run redis-server
+
 ## Contributing
 
 Pull requests and stars are always welcome. For bugs and feature requests, [please create an issue](https://github.com/elishanto/chatbotscommunity-entry-bot/issues)
