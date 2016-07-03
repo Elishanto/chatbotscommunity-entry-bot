@@ -1,4 +1,4 @@
-from telegram import ReplyKeyboardMarkup, KeyboardButton
+from telegram import ReplyKeyboardMarkup, KeyboardButton, Update, CallbackQuery
 import logging
 import threading
 
@@ -26,7 +26,12 @@ def handler(func):
         logging.info(log_msg, *log_args, extra={'update_id': update.update_id})
 
         message = func(*args, **kwargs)
-        lang = self.mongo.get_user_var(update_or_query.message.from_user.id, 'lang', 'ru')
+        if isinstance(update_or_query, Update):
+            lang = self.mongo.get_user_var(update_or_query.message.from_user.id, 'lang', 'ru')
+        elif isinstance(update_or_query, CallbackQuery):
+            lang = self.mongo.get_user_var(update_or_query.from_user.id, 'lang', 'ru')
+        else:
+            lang = 'ru'
         phrases = self.config['langs'][lang]
         if 'type' in message and message['type'] == 'text':
             if message['text'] == phrases['find_interlocutor']:
@@ -67,21 +72,26 @@ def start_search(self, bot, update):
     lang = self.mongo.get_user_var(user_id, 'lang', 'ru')
 
     interlocutor = self.mongo.get_user_where('interlocutor', user_id)
+    # change interlocutor
     if interlocutor:
-        self.mongo.unset_user_var(interlocutor, 'interlocutor')
+        interlocutor_id = interlocutor['user_id']
+        interlocutor_lang = self.mongo.get_user_var(interlocutor_id, 'lang', 'ru')
+        self.mongo.unset_user_var(interlocutor_id, 'interlocutor')
         self.mongo.unset_user_var(user_id, 'interlocutor')
+        self.available.push_to_available(interlocutor_id)
+        bot.sendMessage(interlocutor_id, text=self.config['langs'][interlocutor_lang]['search_began'])
 
     self.available.push_to_available(user_id)
 
-    interlocutor = int(self.available.pop_first_available())
-    self.available.remove(user_id)
+    interlocutor_id = int(self.available.pop_first_available(user_id))
+    interlocutor_lang = self.mongo.get_user_var(interlocutor_id, 'lang', 'ru')
 
-    self.mongo.set_user_var(interlocutor, 'interlocutor', user_id)
-    self.mongo.set_user_var(user_id, 'interlocutor', interlocutor)
+    self.mongo.set_user_var(interlocutor_id, 'interlocutor', user_id)
+    self.mongo.set_user_var(user_id, 'interlocutor', interlocutor_id)
 
     bot.sendMessage(update.message.chat_id, text=self.config['langs'][lang]['found'],
                     reply_markup=ReplyKeyboardMarkup(
                         [[KeyboardButton(self.config['langs'][lang]['change_interlocutor'])]]))
-    bot.sendMessage(interlocutor, text=self.config['langs'][lang]['found'],
+    bot.sendMessage(interlocutor_id, text=self.config['langs'][interlocutor_lang]['found'],
                     reply_markup=ReplyKeyboardMarkup(
-                        [[KeyboardButton(self.config['langs'][lang]['change_interlocutor'])]]))
+                        [[KeyboardButton(self.config['langs'][interlocutor_lang]['change_interlocutor'])]]))

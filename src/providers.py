@@ -11,7 +11,8 @@ class Mongo:
         self.db.users.update_one({'user_id': user_id}, {'$set': {name: var}}, upsert=True)
 
     def unset_user_var(self, user_id, name):
-        self.db.users.update_one({'user_id': user_id}, {'$unset': name}, upsert=True)
+        print(user_id)
+        self.db.users.update_one({'user_id': user_id}, {'$unset': {name: 1}}, upsert=True)
 
     def get_user_var(self, user_id, name, default=None):
         user = self.db.users.find_one({'user_id': user_id})
@@ -29,19 +30,23 @@ class Redis:
 
     def push_to_available(self, user_id):
         self.db.sadd('available', user_id)
-        self.available = True if self.db.scard('available') > 1 else False
+        self.available = True if self.db.scard('available')-1 > 0 else False
 
-    def pop_first_available(self):
+    def pop_first_available(self, self_user_id):
         while not self.available:
             threading.Event().wait()
 
-        res = self.db.spop('available')
-        self.available = True if self.db.scard('available') > 1 else False
+        # TODO: Shuffle
+        res = [int(x) for x in self.db.smembers('available')]
+        if self_user_id in res:
+            res.remove(self_user_id)
+        res = res.pop()
+        self.available = True if self.db.scard('available')-1 > 0 else False
         return res
 
     def remove(self, user_id):
         self.db.srem('available', user_id)
-        self.available = True if self.db.scard('available') > 1 else False
+        self.available = True if self.db.scard('available')-1 > 0 else False
 
 
 class List:
@@ -52,16 +57,20 @@ class List:
     def push_to_available(self, user_id):
         self.db.append(user_id) if user_id not in self.db else None
         self.db = list(set(self.db))
-        self.available = True if len(self.db) > 1 else False
+        self.available = True if len(self.db)-1 > 0 else False
 
-    def pop_first_available(self):
+    def pop_first_available(self, self_user_id):
         while not self.available:
             threading.Event().wait()
 
-        res = self.db.pop()
-        self.available = True if len(self.db) > 1 else False
+        # TODO: Shuffle
+        res = [int(x) for x in self.db]
+        if self_user_id in res:
+            res.remove(self_user_id)
+        res = res.pop()
+        self.available = True if len(self.db)-1 > 0 else False
         return res
 
     def remove(self, user_id):
         self.db.remove(user_id)
-        self.available = True if len(self.db) > 1 else False
+        self.available = True if len(self.db)-1 > 0 else False
