@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 from redis import StrictRedis
 import threading
+from random import shuffle
 
 
 class Mongo:
@@ -11,7 +12,6 @@ class Mongo:
         self.db.users.update_one({'user_id': user_id}, {'$set': {name: var}}, upsert=True)
 
     def unset_user_var(self, user_id, name):
-        print(user_id)
         self.db.users.update_one({'user_id': user_id}, {'$unset': {name: 1}}, upsert=True)
 
     def get_user_var(self, user_id, name, default=None):
@@ -36,8 +36,8 @@ class Redis:
         while not self.available:
             threading.Event().wait()
 
-        # TODO: Shuffle
         res = [int(x) for x in self.db.smembers('available')]
+        shuffle(res)
         if self_user_id in res:
             res.remove(self_user_id)
         res = res.pop()
@@ -63,8 +63,8 @@ class List:
         while not self.available:
             threading.Event().wait()
 
-        # TODO: Shuffle
         res = [int(x) for x in self.db]
+        shuffle(res)
         if self_user_id in res:
             res.remove(self_user_id)
         res = res.pop()
