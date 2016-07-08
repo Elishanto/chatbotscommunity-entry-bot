@@ -1,9 +1,9 @@
 # @CBCEntryBot
 > Telegram bot
 
-## Install dependencies
+## Install
 
-Install with pip
+Install dependencies with pip
 
 ```sh
 $ pip install -r requirements.txt
@@ -21,7 +21,9 @@ TELEGRAM_API_TOKEN: TELEGRAM_API_TOKEN
 db: redis OR list
 ```
 
-If you've chosen `redis` as db you need to install&run redis-server
+If you've chosen `redis` as db you need to install&run redis-server.
+
+Also you need to [install MongoDB](https://www.mongodb.com/download-center?jmp=nav#community) to store user data.
 
 ## Contributing
 
