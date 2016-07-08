@@ -84,13 +84,13 @@ class List(BaseDB):
 
     def pop_first_available(self, self_user_id):
         while not self.available:
-            threading.Event().wait()
+            threading.Event().wait()  # Prevent busy wait and CPU load
 
-        res = [int(x) for x in self.db]
-        shuffle(res)
-        if self_user_id in res:
-            res.remove(self_user_id)
-        res = res.pop()
+        res = [int(x) for x in self.db]  # Get all available possible interlocutors
+        shuffle(res)  # Randomize queue
+        if self_user_id in res:  # User may be listed too
+            res.remove(self_user_id)  # If so, remove him
+        res = res.pop()  # Get random interlocutor
         self.check_available()
         return res
 
@@ -100,4 +100,4 @@ class List(BaseDB):
         self.check_available()
 
     def check_available(self):
-        self.available = True if len(self.db) - 1 > 0 else False
+        self.available = True if len(self.db) - 1 > 0 else False  # If there are more than 1 user in queue
