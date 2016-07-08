@@ -29,13 +29,13 @@ def handler(func):
             log_args.append(update_or_query.message.text)
         logging.info(log_msg, *log_args, extra={'update_id': update.update_id})
 
-        message = func(*args, **kwargs)
+        message = func(*args, **kwargs)  # Get decorated function return
         # Get user lang if exists
         if isinstance(update_or_query, Update):
             lang = self.mongo.get_user_var(update_or_query.message.from_user.id, 'lang', 'ru')
         elif isinstance(update_or_query, CallbackQuery):
             lang = self.mongo.get_user_var(update_or_query.from_user.id, 'lang', 'ru')
-        else:
+        else:  # Otherwise set lang to russian
             lang = 'ru'
         phrases = self.config['langs'][lang]
 
