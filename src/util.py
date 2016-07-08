@@ -4,16 +4,20 @@ import threading
 
 
 def handler(func):
+    """
+    Every handler should have this decorator
+    """
     def wrapper(*args, **kwargs):
         self = args[0]
         bot = args[1]
         update = args[2]
         update_or_query = args[2]
+        # Update may be a callback query (it's tricky)
         if hasattr(update_or_query, 'callback_query') and update_or_query.callback_query:
             update_or_query = update_or_query.callback_query
-        # logging query
+        # Logging query
         log_msg, log_args = 'Calling "%s" handler', [func.__name__]
-        # additional data needs to be logged too!
+        # Additional data needs to be logged too!
         if hasattr(update_or_query, 'data') and update_or_query.data:
             log_msg += ' with data "%s"'
             log_args.append(update_or_query.data.split(']['))
@@ -26,6 +30,7 @@ def handler(func):
         logging.info(log_msg, *log_args, extra={'update_id': update.update_id})
 
         message = func(*args, **kwargs)
+        # Get user lang if exists
         if isinstance(update_or_query, Update):
             lang = self.mongo.get_user_var(update_or_query.message.from_user.id, 'lang', 'ru')
         elif isinstance(update_or_query, CallbackQuery):
@@ -33,22 +38,22 @@ def handler(func):
         else:
             lang = 'ru'
         phrases = self.config['langs'][lang]
-        if 'type' in message and message['type'] == 'text':
-            if message['text'] == phrases['find_interlocutor']:
+
+        if 'type' in message and message['type'] == 'text':  # If message is text
+            if message['text'] in (
+                        phrases['find_interlocutor'], phrases['change_interlocutor']
+            ):  # If user wants to change/find interlocutor
                 message['text'] = phrases['search_began']
                 threading.Thread(target=start_search, args=(self, bot, update)).start()
-            elif message['text'] == phrases['change_interlocutor']:
-                message['text'] = phrases['search_began']
-                threading.Thread(target=start_search, args=(self, bot, update)).start()
-            else:
+            else:  # Otherwise send his message to interlocutor
                 send_to_interlocutor(self, bot, update, message)
                 return
         else:
-            if 'text' in message and message['text'] in phrases:
+            if 'text' in message and message['text'] in phrases:  # If message is a command
                 text = message.pop('text')
                 text = phrases[text]
                 message['text'] = text
-            if 'button_text' in message and message['button_text'] in phrases:
+            if 'button_text' in message and message['button_text'] in phrases:  # If user contacts me first time
                 button = message.pop('button_text')
                 button = phrases[button]
                 message['reply_markup'] = ReplyKeyboardMarkup([[KeyboardButton(button)]])
@@ -60,11 +65,12 @@ def handler(func):
 
 def send_to_interlocutor(self, bot, update, message):
     user_id = update.message.from_user.id
-    interlocutor = self.mongo.get_user_var(user_id, 'interlocutor')
+    interlocutor = self.mongo.get_user_var(user_id, 'interlocutor')  # Get user's interlocutor from db
     if not interlocutor:
         return
 
     msg = message['message'].to_dict()
+    # There are a lot of message types in telegram
     if 'audio' in msg and msg['audio']:
         bot.sendAudio(interlocutor, msg['audio']['file_id'])
     elif 'contact' in msg and msg['contact']:
@@ -74,7 +80,7 @@ def send_to_interlocutor(self, bot, update, message):
     elif 'location' in msg and msg['location']:
         bot.sendLocation(interlocutor, msg['location']['latitude'], msg['location']['longitude'])
     elif 'photo' in msg and msg['photo']:
-        for photo in msg['photo']:
+        for photo in msg['photo']:  # There are always a lot of photos, even if it is one (idk why, telegram???)
             bot.sendPhoto(interlocutor, photo['file_id'])
     elif 'sticker' in msg and msg['sticker']:
         bot.sendSticker(interlocutor, msg['sticker']['file_id'])
@@ -91,10 +97,10 @@ def send_to_interlocutor(self, bot, update, message):
 
 def start_search(self, bot, update):
     user_id = update.message.from_user.id
-    lang = self.mongo.get_user_var(user_id, 'lang', 'ru')
+    lang = self.mongo.get_user_var(user_id, 'lang', 'ru')  # Get user's lang from db
 
-    interlocutor = self.mongo.get_user_where('interlocutor', user_id)
-    # change interlocutor
+    interlocutor = self.mongo.get_user_where('interlocutor', user_id)  # Get user's interlocutor from db
+    # Change interlocutor if exists
     if interlocutor:
         interlocutor_id = interlocutor['user_id']
         interlocutor_lang = self.mongo.get_user_var(interlocutor_id, 'lang', 'ru')
@@ -108,15 +114,16 @@ def start_search(self, bot, update):
                 [[KeyboardButton(self.config['langs'][interlocutor_lang]['find_interlocutor'])]]
             )
         )
-
+    # Otherwise find new one
     self.available.push_to_available(user_id)
 
     interlocutor_id = int(self.available.pop_first_available(user_id))
     interlocutor_lang = self.mongo.get_user_var(interlocutor_id, 'lang', 'ru')
 
-    self.mongo.set_user_var(interlocutor_id, 'interlocutor', user_id)
-    self.mongo.set_user_var(user_id, 'interlocutor', interlocutor_id)
+    self.mongo.set_user_var(interlocutor_id, 'interlocutor', user_id)  # Set interlocutor's interlocutor (user)
+    self.mongo.set_user_var(user_id, 'interlocutor', interlocutor_id)  # Set user's interlocutor
 
+    # Success!
     bot.sendMessage(update.message.chat_id,
                     text=self.config['langs'][lang]['found'],
                     reply_markup=ReplyKeyboardMarkup(

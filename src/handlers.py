@@ -7,6 +7,8 @@ class Handlers:
     def __init__(self, config):
         self.config = config
         self.mongo = Mongo()
+
+        # Choose db source based on config
         if self.config['db'] == 'redis':
             self.available = Redis()
         else:
@@ -15,6 +17,7 @@ class Handlers:
     @handler
     def start(self, bot, update):
         chat_id = update.message.chat_id
+        # Language choosing
         return {
             'chat_id': chat_id,
             'text': 'Choose language',
@@ -31,6 +34,7 @@ class Handlers:
         data = query.data
         bot.answerCallbackQuery(query.id)
 
+        # If callback is language choosing
         if data in self.config['langs'].keys():
             self.mongo.set_user_var(query.from_user.id, 'lang', data)
             return {
